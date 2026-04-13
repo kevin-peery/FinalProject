@@ -4,23 +4,23 @@ using UnityEngine;
 
 public class MainCamera : MonoBehaviour
 {
-    private const int MIN_ZOOM = 1,
-                      MAX_ZOOM = 3;
+    private const byte MIN_ZOOM = 1,
+                       MAX_ZOOM = 3;
 
     [Header("Inscribed")]
+    public GameObject POI;
     [SerializeField]
     [Range(MIN_ZOOM, MAX_ZOOM)]
-    private int _zoomLevel = 2;
+    private byte _zoomLevel = 2;
     [SerializeField]
     private float easingSpeed = 1;
 
     [Header("Dynamic")]
-    public GameObject POI;
-    Vector3 prevLocation;
-    private int prevZoom;
+    private Vector3 prevLocation;
+    private byte prevZoom;
     private float easing = 0;
 
-    public int ZoomLevel
+    public byte ZoomLevel
     {
         get { return _zoomLevel; }
         set
@@ -37,9 +37,7 @@ public class MainCamera : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        POI = GameObject.FindGameObjectWithTag("Player");
         prevZoom = ZoomLevel;
-
     }
 
     // Update is called once per frame

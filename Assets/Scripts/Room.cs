@@ -15,4 +15,9 @@ public class Room : MonoBehaviour
     {
         
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        
+    }
 }

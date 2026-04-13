@@ -16,18 +16,18 @@ public class Player : MonoBehaviour
         Skill4 = 32
     }
 
-    private const int MAX_TRACK_COUNT = 60;
+    private const int MAX_FRAME_COUNT = 60;
 
-    private static Player S;
+    public static Player S {  get; private set; }
 
     [Header("Inscribed")]
     public Character playAs;
 
     [Header("Dynamic")]
     private List<Inputs> _inputTracker;
+    Inputs currInputs;
     private List<float[]> _axesTracker;
-    private float _moveDirection,
-                  _aimDirection;
+    private float frameCount;
 
     public List<Inputs> InputTracker
     {
@@ -39,20 +39,6 @@ public class Player : MonoBehaviour
         get { return _axesTracker; }
         private set { _axesTracker = value; }
     }
-    public float MoveDirection
-    {
-        get { return _moveDirection; }
-        set {  _moveDirection = CheckRotation(value); }
-    }
-
-    private float CheckRotation(float rotation)
-    {
-        while (rotation < 0)
-            rotation += 360;
-        while (rotation >= 360)
-            rotation -= 360;
-        return rotation;
-    }
 
     void Awake()
     {
@@ -61,67 +47,119 @@ public class Player : MonoBehaviour
         AxesTracker = new List<float[]>();
     }
 
+    private void Start()
+    {
+        playAs.aimingGuide.playerControlled = true;
+        
+    }
+
     void Update()
     {
+        frameCount += Time.deltaTime;
+        frameCount %= 1;
+
         // Read current inputs
         int trackBack;
         Inputs input = 0;
 
-        // Read axes and mouse
+        // Read axes
         float xAxis = Input.GetAxis("Horizontal"),
               zAxis = Input.GetAxis("Vertical"),
-              hAxis = Mathf.Sqrt((xAxis * xAxis) + (zAxis * zAxis));
+              hypotenuse = Mathf.Sqrt((xAxis * xAxis) + (zAxis * zAxis));
 
-        if (hAxis > 1)
-            hAxis = 1;
+        if (hypotenuse > 1)
+            hypotenuse = 1f;
 
-        if (InputTracker.Count >= MAX_TRACK_COUNT)
-            InputTracker.RemoveAt(MAX_TRACK_COUNT - 1);
-        if (AxesTracker.Count >= MAX_TRACK_COUNT)
-            AxesTracker.RemoveAt(MAX_TRACK_COUNT - 1);
+        float[] axesInput = new float[] { xAxis, zAxis, hypotenuse };
+
+        // Read mouse
+        Vector3 mousePos = Input.mousePosition;
+        mousePos = new Vector3(mousePos.x - (Screen.width / 2f), mousePos.y - (Screen.height / 2f));
+
+
+
+        // Read button inputs
+        if (Input.GetMouseButton(0))
+        {
+            input |= Inputs.MeleeAttack;
+        }
+        if (Input.GetMouseButton(1))
+        {
+            input |= Inputs.RangedAttack;
+        }
+
+        // Add to InputTracker
+        if (InputTracker.Count >= MAX_FRAME_COUNT)
+            InputTracker.RemoveAt(MAX_FRAME_COUNT - 1);
+        if (AxesTracker.Count >= MAX_FRAME_COUNT)
+            AxesTracker.RemoveAt(MAX_FRAME_COUNT - 1);
 
         InputTracker.Insert(0, input);
-        AxesTracker.Insert(0, new float[] { xAxis, zAxis, hAxis });
+        AxesTracker.Insert(0, axesInput);
 
         // Read previous inputs
-        Inputs prevInputs;
-        float prevHAxis = 0;
+        float prevHypotenuse = 0;
 
         trackBack = 0;
         foreach (var axes in AxesTracker)
         {
-            trackBack++;
-            if (trackBack > 1)
+            if (trackBack > 0)
             {
-                prevHAxis = axes[2];
+                prevHypotenuse = axes[2];
                 break;
             }
+            trackBack++;
         }
 
-        Vector3 pos = transform.position;
-        pos.x += xAxis * playAs.Speed * Time.deltaTime;
-        pos.z += zAxis * playAs.Speed * Time.deltaTime;
-        transform.position = pos;
+        // Move player
+        playAs.Move(xAxis, zAxis, hypotenuse);
 
-        if (hAxis >= prevHAxis)
-            if (xAxis == 0)
+        // Rotate aim
+        if (mousePos.x == 0)
+        {
+            if (mousePos.y < 0)
+                playAs.AimDirection = 180f;
+            else if (mousePos.y > 0)
+                playAs.AimDirection = 0f;
+        }
+        else
+            playAs.AimDirection = -(Mathf.Atan2(mousePos.y, mousePos.x)) * Mathf.Rad2Deg + 90;
+
+        // Determine player action
+
+        // Spin
+        trackBack = 0;
+        foreach (float[] axes in AxesTracker)
+        {
+            if (axes[2] < 0.5f)
+                break;
+
+
+        }
+
+        // Guard
+        trackBack = 0;
+        bool guardCheck = false;
+        foreach (Inputs i in InputTracker)
+            if (i.HasFlag(Inputs.MeleeAttack))
             {
-                if (zAxis < 0)
-                    transform.rotation = Quaternion.Euler(0, 180, 0);
-                else if (zAxis > 0)
-                    transform.rotation = Quaternion.Euler(0, 0, 0);
+                trackBack++;
+                if (trackBack >= MAX_FRAME_COUNT / 2f)
+                {
+                    playAs.Guard();
+                    guardCheck = true;
+                    break;
+                }
             }
             else
-            {
-                MoveDirection = -(Mathf.Atan2(zAxis, xAxis)) * Mathf.Rad2Deg + 90;
-                transform.rotation = Quaternion.Euler(0, MoveDirection, 0);
-            }
+                break;
 
+        // Melee attack
+        if (input.HasFlag(Inputs.MeleeAttack) && (!playAs.status.HasFlag(Character.Status.IsGuarding)))
+            playAs.MeleeAttack();
 
-    }
-
-    void FixedUpdate()
-    {
-        
+        // Ranged attack
+        if (input.HasFlag(Inputs.RangedAttack) && (!playAs.status.HasFlag(Character.Status.IsAttacking)))
+            playAs.RangedAttack();
     }
 }
