@@ -186,6 +186,7 @@ public abstract class Character : MonoBehaviour
     public virtual void Defeated()
     {
         status = Status.IsDefeated;
+        status |= Status.IsDenyingInputs;
 
         Rigidbody rb = gameObject.GetComponent<Rigidbody>();
         if (rb != null)

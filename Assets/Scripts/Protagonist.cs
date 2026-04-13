@@ -38,8 +38,8 @@ public class Protagonist : Character
         base.Start();
         lw = Instantiate(weaponL, lPosition.transform);
         rw = Instantiate(weaponR, rPosition.transform);
-        lPosition.transform.localRotation = Quaternion.Euler(-90f, 15f, 180f);
-        rPosition.transform.localRotation = Quaternion.Euler(-90f, -15f, 180f);
+        lPosition.transform.localRotation = Quaternion.Euler(-90f, 0f, 180f);
+        rPosition.transform.localRotation = Quaternion.Euler(-90f, 0f, 180f);
         comboCount = 0;
 
         animator.speed = 0f;

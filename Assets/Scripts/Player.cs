@@ -139,7 +139,6 @@ public class Player : MonoBehaviour
 
         // Guard
         trackBack = 0;
-        bool guardCheck = false;
         foreach (Inputs i in InputTracker)
             if (i.HasFlag(Inputs.MeleeAttack))
             {
@@ -147,7 +146,6 @@ public class Player : MonoBehaviour
                 if (trackBack >= MAX_FRAME_COUNT / 2f)
                 {
                     playAs.Guard();
-                    guardCheck = true;
                     break;
                 }
             }

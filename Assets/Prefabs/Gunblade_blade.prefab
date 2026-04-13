@@ -59,8 +59,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f24d601745eb424c9f400ddd4c8edb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 10
   melee: 1
+  damage: 10
   active: 0
   blockable: 1
   cameFrom: {fileID: 0}
